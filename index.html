@@ -1,0 +1,927 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="theme-color" content="#00e5b4">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="PharmAnalytics">
+<meta name="mobile-web-app-capable" content="yes">
+<link rel="manifest" href="/manifest.json">
+<link rel="apple-touch-icon" href="/icon-192.png">
+<title>PharmAnalytics</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display&family=DM+Mono:wght@400;500&family=Instrument+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+:root{--bg:#0a0f1a;--surf:#111827;--surf2:#1a2332;--bdr:#1e2d42;--acc:#00e5b4;--acc2:#ff6b35;--acc3:#7c6bff;--tx:#e8f0fe;--mt:#6b7a99;--dng:#ff4d6d}
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'Instrument Sans',sans-serif;background:var(--bg);color:var(--tx);min-height:100vh;min-height:100dvh;overscroll-behavior:none}
+body::before{content:'';position:fixed;inset:0;background-image:linear-gradient(rgba(0,229,180,.03) 1px,transparent 1px),linear-gradient(90deg,rgba(0,229,180,.03) 1px,transparent 1px);background-size:40px 40px;pointer-events:none;z-index:0}
+.wrap{max-width:1100px;margin:0 auto;padding:0 16px;position:relative;z-index:1;padding-bottom:40px}
+
+/* ── Login screen ───────────────────────────────── */
+#login-screen{display:none;min-height:100vh;align-items:center;justify-content:center;padding:24px}
+#login-screen.on{display:flex}
+.login-card{background:var(--surf);border:1px solid var(--bdr);border-radius:24px;padding:40px 32px;width:100%;max-width:420px;text-align:center}
+.login-logo{width:64px;height:64px;background:linear-gradient(135deg,var(--acc),var(--acc3));border-radius:18px;display:flex;align-items:center;justify-content:center;font-size:28px;margin:0 auto 20px}
+.login-card h1{font-family:'DM Serif Display',serif;font-size:28px;margin-bottom:6px}
+.login-card p{color:var(--mt);font-family:'DM Mono',monospace;font-size:12px;margin-bottom:32px;line-height:1.7}
+.google-btn{display:flex;align-items:center;justify-content:center;gap:12px;width:100%;padding:14px 20px;border-radius:12px;border:1px solid var(--bdr);background:var(--surf2);color:var(--tx);font-family:'Instrument Sans',sans-serif;font-size:15px;font-weight:500;cursor:pointer;transition:all .2s}
+.google-btn:hover{border-color:var(--acc);background:rgba(0,229,180,.06)}
+.google-btn svg{flex-shrink:0}
+.login-note{margin-top:16px;font-family:'DM Mono',monospace;font-size:10px;color:var(--mt);line-height:1.8}
+
+/* ── App chrome ─────────────────────────────────── */
+#app{display:none}
+#app.on{display:block}
+header{padding:16px 0;border-bottom:1px solid var(--bdr);margin-bottom:24px}
+.hdr{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap}
+.logo{display:flex;align-items:center;gap:10px}
+.logo-ic{width:34px;height:34px;background:linear-gradient(135deg,var(--acc),var(--acc3));border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:16px}
+.logo h1{font-family:'DM Serif Display',serif;font-size:19px}
+.logo p{font-family:'DM Mono',monospace;font-size:9px;color:var(--mt);letter-spacing:2px;text-transform:uppercase}
+.hdr-right{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.tabs{display:flex;gap:6px;flex-wrap:wrap}
+.tab{padding:5px 12px;border-radius:20px;border:1px solid var(--bdr);background:transparent;color:var(--mt);font-family:'DM Mono',monospace;font-size:11px;cursor:pointer;transition:all .2s}
+.tab:hover{border-color:var(--acc);color:var(--acc)}
+.tab.on{background:var(--acc);border-color:var(--acc);color:var(--bg);font-weight:600}
+
+/* User pill */
+.user-pill{display:flex;align-items:center;gap:7px;padding:5px 10px 5px 5px;border:1px solid var(--bdr);border-radius:20px;cursor:pointer;transition:all .2s;position:relative}
+.user-pill:hover{border-color:var(--dng)}
+.user-av{width:24px;height:24px;border-radius:50%;background:linear-gradient(135deg,var(--acc3),var(--acc));display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;color:#fff;overflow:hidden;flex-shrink:0}
+.user-av img{width:100%;height:100%;object-fit:cover}
+.user-name{font-family:'DM Mono',monospace;font-size:10px;color:var(--tx);max-width:100px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.user-menu{position:absolute;top:calc(100% + 8px);right:0;background:var(--surf);border:1px solid var(--bdr);border-radius:12px;padding:6px;min-width:180px;display:none;z-index:50;box-shadow:0 8px 32px rgba(0,0,0,.4)}
+.user-menu.on{display:block}
+.user-menu-email{padding:8px 10px;font-family:'DM Mono',monospace;font-size:10px;color:var(--mt);border-bottom:1px solid var(--bdr);margin-bottom:4px;word-break:break-all}
+.um-btn{width:100%;padding:8px 10px;border-radius:8px;border:none;background:transparent;color:var(--tx);font-family:'DM Mono',monospace;font-size:12px;cursor:pointer;text-align:left;transition:all .2s}
+.um-btn:hover{background:var(--surf2)}
+.um-btn.red{color:var(--dng)}
+.um-btn.red:hover{background:rgba(255,77,109,.1)}
+
+/* ── Upload section ─────────────────────────────── */
+.drop{border:2px dashed var(--bdr);border-radius:16px;padding:44px 20px;text-align:center;cursor:pointer;transition:all .3s;background:var(--surf);display:block;position:relative;overflow:hidden}
+.drop::before{content:'';position:absolute;inset:0;background:radial-gradient(ellipse at center,rgba(0,229,180,.05),transparent 70%);opacity:0;transition:.3s}
+.drop:hover,.drop.over{border-color:var(--acc)}
+.drop:hover::before,.drop.over::before{opacity:1}
+.drop input{display:none}
+.drop h2{font-family:'DM Serif Display',serif;font-size:21px;margin:10px 0 5px}
+.drop p{color:var(--mt);font-size:13px}
+.drop .hint{font-family:'DM Mono',monospace;font-size:10px;color:var(--mt);margin-top:12px;letter-spacing:1px;text-transform:uppercase}
+.cam-row{display:flex;gap:10px;margin-top:14px;justify-content:center;flex-wrap:wrap}
+.cam-btn{padding:10px 20px;border-radius:10px;border:1px solid var(--acc);background:rgba(0,229,180,.08);color:var(--acc);font-size:13px;font-weight:500;cursor:pointer;display:flex;align-items:center;gap:6px;transition:all .2s}
+.cam-btn:hover{background:rgba(0,229,180,.15)}
+.cam-btn input{display:none}
+
+/* ── Past months ────────────────────────────────── */
+#past-section{margin-top:28px}
+.section-hdr{display:flex;align-items:center;gap:10px;margin-bottom:14px}
+.section-hdr h3{font-family:'DM Serif Display',serif;font-size:18px}
+.section-hdr .ln{flex:1;height:1px;background:var(--bdr)}
+.ghost{padding:7px 14px;border-radius:10px;border:1px solid var(--bdr);background:transparent;color:var(--tx);font-size:13px;cursor:pointer;transition:all .2s}
+.ghost:hover{border-color:var(--acc);color:var(--acc)}
+.no-saved{background:var(--surf);border:1px solid var(--bdr);border-radius:12px;padding:22px;text-align:center;color:var(--mt);font-family:'DM Mono',monospace;font-size:12px;line-height:1.8}
+.saved-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(155px,1fr));gap:10px}
+.saved-card{background:var(--surf);border:1px solid var(--bdr);border-radius:12px;padding:14px;cursor:pointer;transition:all .2s;position:relative}
+.saved-card:hover{border-color:var(--acc);background:var(--surf2)}
+.saved-card .sm{font-family:'DM Serif Display',serif;font-size:16px;margin-bottom:5px}
+.saved-card .ss{font-family:'DM Mono',monospace;font-size:10px;color:var(--mt);margin-top:2px}
+.saved-card .ss.profit{color:var(--acc)}
+.sdel{position:absolute;top:8px;right:8px;background:transparent;border:none;color:var(--mt);cursor:pointer;font-size:13px;padding:3px 6px;border-radius:6px;transition:all .2s;opacity:0;line-height:1}
+.saved-card:hover .sdel{opacity:1}
+.sdel:hover{color:var(--dng)!important;background:rgba(255,77,109,.12)}
+
+/* ── Month picker ───────────────────────────────── */
+#picker-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.65);backdrop-filter:blur(5px);z-index:100;align-items:center;justify-content:center;padding:16px}
+#picker-overlay.on{display:flex}
+.picker-box{background:var(--surf);border:1px solid var(--bdr);border-radius:20px;padding:26px;width:320px;max-width:100%;animation:pop .2s ease}
+@keyframes pop{from{transform:scale(.9);opacity:0}to{transform:scale(1);opacity:1}}
+.picker-box h3{font-family:'DM Serif Display',serif;font-size:19px;margin-bottom:4px}
+.picker-box .sub{font-family:'DM Mono',monospace;font-size:11px;color:var(--mt);margin-bottom:20px}
+.picker-year-row{display:flex;align-items:center;justify-content:space-between;margin-bottom:16px}
+.yr-btn{background:var(--surf2);border:1px solid var(--bdr);color:var(--tx);border-radius:8px;padding:7px 16px;cursor:pointer;font-size:15px;transition:all .2s}
+.yr-btn:hover{border-color:var(--acc);color:var(--acc)}
+#picker-year{font-family:'DM Serif Display',serif;font-size:24px}
+.month-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:18px}
+.mg-btn{padding:11px 6px;border-radius:10px;border:1px solid var(--bdr);background:transparent;color:var(--tx);font-family:'DM Mono',monospace;font-size:12px;cursor:pointer;transition:all .2s;text-align:center}
+.mg-btn.has-data{border-color:rgba(0,229,180,.5);background:rgba(0,229,180,.07);color:var(--acc);font-weight:500}
+.mg-btn.has-data:hover{background:rgba(0,229,180,.15);border-color:var(--acc)}
+.mg-btn.no-data{color:var(--mt);opacity:.35;cursor:not-allowed}
+.picker-close{width:100%;padding:11px;border-radius:10px;border:1px solid var(--bdr);background:transparent;color:var(--mt);font-family:'DM Mono',monospace;font-size:12px;cursor:pointer;transition:all .2s}
+.picker-close:hover{border-color:var(--dng);color:var(--dng)}
+
+/* ── Spinner ────────────────────────────────────── */
+#spin-wrap{display:none;text-align:center;padding:40px}
+#spin-wrap.on{display:block}
+.spin-ring svg{animation:sp 1s linear infinite}
+@keyframes sp{to{transform:rotate(360deg)}}
+#spin-wrap h3{font-family:'DM Serif Display',serif;font-size:19px;margin-bottom:6px}
+#spin-msg{color:var(--mt);font-family:'DM Mono',monospace;font-size:12px}
+.prog-bar{width:100%;max-width:300px;height:4px;background:var(--bdr);border-radius:2px;margin:12px auto 0;overflow:hidden}
+.prog-fill{height:100%;background:var(--acc);border-radius:2px;transition:width .3s;width:0%}
+
+/* Loading overlay for DB ops */
+#db-loading{display:none;position:fixed;inset:0;background:rgba(10,15,26,.8);backdrop-filter:blur(3px);z-index:400;align-items:center;justify-content:center;flex-direction:column;gap:12px}
+#db-loading.on{display:flex}
+#db-loading svg{animation:sp 1s linear infinite}
+#db-loading p{font-family:'DM Mono',monospace;font-size:13px;color:var(--acc)}
+
+.err{background:rgba(255,77,109,.1);border:1px solid var(--dng);border-radius:12px;padding:14px 16px;color:var(--dng);font-family:'DM Mono',monospace;font-size:13px;line-height:1.6;display:none;margin-bottom:16px}
+.err.on{display:block}
+
+/* ── Manual entry ───────────────────────────────── */
+#manual-section{display:none;margin-top:18px}
+#manual-section.on{display:block}
+.manual-card{background:var(--surf);border:1px solid var(--bdr);border-radius:14px;padding:20px}
+.manual-card h3{font-family:'DM Serif Display',serif;font-size:18px;margin-bottom:5px}
+.manual-card p{color:var(--mt);font-size:13px;margin-bottom:14px}
+.month-row{display:flex;gap:8px;margin-bottom:14px;flex-wrap:wrap}
+.mi{padding:9px 11px;border-radius:8px;border:1px solid var(--bdr);background:var(--surf2);color:var(--tx);font-family:'DM Mono',monospace;font-size:13px;outline:none;transition:border .2s}
+.mi:focus{border-color:var(--acc)}
+.mi::placeholder{color:var(--mt)}
+.mi.wide{flex:1;min-width:130px}
+#rows-container{display:flex;flex-direction:column;gap:6px;margin-bottom:12px;max-height:280px;overflow-y:auto}
+.row-entry{display:flex;gap:6px;align-items:center}
+.row-entry .mi{flex:1;min-width:0}
+.row-entry button{padding:7px 9px;border-radius:7px;border:1px solid var(--dng);background:transparent;color:var(--dng);cursor:pointer;font-size:12px;flex-shrink:0}
+.add-row-btn{padding:7px 14px;border-radius:8px;border:1px solid var(--acc);background:transparent;color:var(--acc);font-family:'DM Mono',monospace;font-size:12px;cursor:pointer;margin-bottom:12px}
+.submit-btn{padding:11px 22px;border-radius:10px;border:none;background:var(--acc);color:var(--bg);font-family:'Instrument Sans',sans-serif;font-size:14px;font-weight:600;cursor:pointer}
+
+/* ── Dashboard ──────────────────────────────────── */
+#dash{display:none}
+#dash.on{display:block}
+.dash-hdr{display:flex;justify-content:space-between;align-items:center;margin-bottom:20px;flex-wrap:wrap;gap:10px}
+.dash-hdr h2{font-family:'DM Serif Display',serif;font-size:28px;letter-spacing:-1px}
+.dash-hdr small{font-family:'DM Mono',monospace;font-size:10px;color:var(--mt);text-transform:uppercase;letter-spacing:2px;display:block;margin-bottom:3px}
+
+.mom{background:var(--surf);border:1px solid var(--bdr);border-radius:14px;padding:16px 18px;margin-bottom:22px;display:none}
+.mom.on{display:block}
+.mom-lbl{font-family:'DM Mono',monospace;font-size:10px;color:var(--mt);text-transform:uppercase;letter-spacing:2px;margin-bottom:10px}
+.mom-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}
+.mom-item{text-align:center}
+.mom-item .ml{font-family:'DM Mono',monospace;font-size:9px;color:var(--mt);text-transform:uppercase;letter-spacing:1px}
+.mom-item .mv{font-family:'DM Serif Display',serif;font-size:18px;margin:2px 0}
+.mom-item .ms{font-size:10px;font-family:'DM Mono',monospace;color:var(--mt)}
+.up{color:var(--acc)}.dn{color:var(--dng)}
+
+.kpi{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:12px;margin-bottom:22px}
+.kc{background:var(--surf);border:1px solid var(--bdr);border-radius:14px;padding:16px;position:relative;overflow:hidden;animation:fu .4s ease both}
+.kc::after{content:'';position:absolute;top:0;left:0;right:0;height:2px}
+.kc.g::after{background:var(--acc)}.kc.o::after{background:var(--acc2)}.kc.p::after{background:var(--acc3)}.kc.r::after{background:var(--dng)}
+@keyframes fu{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:translateY(0)}}
+.kl{font-family:'DM Mono',monospace;font-size:9px;color:var(--mt);text-transform:uppercase;letter-spacing:1.5px;margin-bottom:6px}
+.kv{font-family:'DM Serif Display',serif;font-size:24px;letter-spacing:-1px;line-height:1}
+.ks{font-size:11px;color:var(--mt);margin-top:4px;font-family:'DM Mono',monospace}
+
+.card{background:var(--surf);border:1px solid var(--bdr);border-radius:14px;padding:18px;margin-bottom:22px}
+.sh{display:flex;align-items:center;gap:8px;margin-bottom:12px}
+.sh h3{font-family:'DM Serif Display',serif;font-size:17px}
+.sh .ln{flex:1;height:1px;background:var(--bdr)}
+.sh .tg{font-family:'DM Mono',monospace;font-size:9px;color:var(--mt);letter-spacing:1px}
+.leg{display:flex;gap:14px;margin-bottom:10px;font-family:'DM Mono',monospace;font-size:11px}
+.ld{width:8px;height:8px;border-radius:2px;display:inline-block;margin-right:4px;vertical-align:middle}
+.bwrap{overflow-x:auto;-webkit-overflow-scrolling:touch}
+.bchart{display:flex;align-items:flex-end;gap:4px;height:140px;min-width:520px;padding-bottom:20px;position:relative}
+.bchart::before{content:'';position:absolute;bottom:20px;left:0;right:0;height:1px;background:var(--bdr)}
+.bg{flex:1;display:flex;flex-direction:column;align-items:center;gap:2px;position:relative}
+.bg:hover .btt{opacity:1;transform:translateX(-50%) translateY(-3px)}
+.br{width:100%;border-radius:3px 3px 0 0;min-height:3px}
+.br.s{background:linear-gradient(180deg,var(--acc3),rgba(124,107,255,.45))}
+.br.c{background:linear-gradient(180deg,var(--acc),rgba(0,229,180,.4))}
+.blbl{position:absolute;bottom:0;font-family:'DM Mono',monospace;font-size:8px;color:var(--mt);white-space:nowrap}
+.btt{position:absolute;bottom:calc(100% + 6px);left:50%;transform:translateX(-50%);background:var(--surf2);border:1px solid var(--bdr);border-radius:8px;padding:6px 8px;font-family:'DM Mono',monospace;font-size:10px;white-space:nowrap;opacity:0;transition:all .2s;pointer-events:none;z-index:10}
+
+.two{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:22px}
+@media(max-width:540px){.two{grid-template-columns:1fr}}
+.ic h4{font-family:'DM Serif Display',serif;font-size:15px;margin-bottom:10px}
+.ir{display:flex;justify-content:space-between;align-items:center;padding:6px 0;border-bottom:1px solid rgba(30,45,66,.5)}
+.ir:last-child{border-bottom:none}
+.ir .il{color:var(--mt);font-family:'DM Mono',monospace;font-size:10px}
+.ir .iv{font-family:'DM Mono',monospace;font-weight:500;font-size:11px}
+
+table{width:100%;border-collapse:collapse}
+th{font-family:'DM Mono',monospace;font-size:9px;text-transform:uppercase;letter-spacing:1.5px;color:var(--mt);padding:8px 12px;text-align:left;border-bottom:1px solid var(--bdr)}
+td{padding:8px 12px;font-family:'DM Mono',monospace;font-size:11px;border-bottom:1px solid rgba(30,45,66,.4)}
+tr:hover td{background:rgba(0,229,180,.03)}
+.tr{text-align:right}
+.pos{color:var(--acc)}.neg{color:var(--dng)}
+.best td{background:rgba(0,229,180,.05)}
+
+/* ── Save bar ───────────────────────────────────── */
+#save-bar{background:linear-gradient(135deg,rgba(0,229,180,.06),rgba(124,107,255,.06));border:1px solid var(--bdr);border-radius:16px;padding:20px 22px;margin-top:4px;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:14px}
+.save-bar-txt h4{font-family:'DM Serif Display',serif;font-size:17px;margin-bottom:4px}
+.save-bar-txt p{font-family:'DM Mono',monospace;font-size:11px;color:var(--mt)}
+.save-actions{display:flex;gap:10px;flex-wrap:wrap;align-items:center}
+.save-btn{padding:11px 22px;border-radius:10px;border:none;background:var(--acc);color:var(--bg);font-family:'Instrument Sans',sans-serif;font-size:14px;font-weight:600;cursor:pointer;transition:all .2s}
+.save-btn:hover{opacity:.85}
+.save-btn.saved{background:var(--surf2);border:1px solid var(--acc);color:var(--acc);cursor:default}
+.del-month-btn{padding:11px 18px;border-radius:10px;border:1px solid rgba(255,77,109,.35);background:transparent;color:var(--dng);font-family:'Instrument Sans',sans-serif;font-size:13px;cursor:pointer;transition:all .2s}
+.del-month-btn:hover{border-color:var(--dng);background:rgba(255,77,109,.09)}
+
+/* ── Confirm modal ──────────────────────────────── */
+#confirm-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.65);backdrop-filter:blur(5px);z-index:200;align-items:center;justify-content:center;padding:16px}
+#confirm-overlay.on{display:flex}
+.confirm-box{background:var(--surf);border:1px solid rgba(255,77,109,.3);border-radius:20px;padding:30px 24px;width:340px;max-width:100%;text-align:center;animation:pop .2s ease}
+.confirm-box .ci{font-size:36px;margin-bottom:12px}
+.confirm-box h3{font-family:'DM Serif Display',serif;font-size:21px;margin-bottom:8px}
+.confirm-box p{font-family:'DM Mono',monospace;font-size:12px;color:var(--mt);margin-bottom:24px;line-height:1.8}
+.confirm-row{display:flex;gap:10px;justify-content:center}
+.confirm-ok{padding:11px 28px;border-radius:10px;border:none;background:var(--dng);color:#fff;font-size:14px;font-weight:600;cursor:pointer}
+.confirm-cancel{padding:11px 20px;border-radius:10px;border:1px solid var(--bdr);background:transparent;color:var(--mt);font-size:14px;cursor:pointer}
+.confirm-cancel:hover{border-color:var(--tx);color:var(--tx)}
+
+/* ── Toast ──────────────────────────────────────── */
+#toast{position:fixed;bottom:28px;left:50%;transform:translateX(-50%) translateY(16px);background:var(--surf2);border:1px solid var(--bdr);border-radius:12px;padding:11px 20px;font-family:'DM Mono',monospace;font-size:13px;color:var(--tx);opacity:0;transition:all .3s;z-index:300;white-space:nowrap;pointer-events:none;box-shadow:0 8px 32px rgba(0,0,0,.4)}
+#toast.on{opacity:1;transform:translateX(-50%) translateY(0)}
+#toast.good{border-color:var(--acc);color:var(--acc)}
+#toast.bad{border-color:var(--dng);color:var(--dng)}
+</style>
+</head>
+<body>
+
+<!-- ═══════════════ LOGIN SCREEN ═══════════════ -->
+<div id="login-screen">
+  <div class="login-card">
+    <div class="login-logo">💊</div>
+    <h1>PharmAnalytics</h1>
+    <p>MedPlus Cash Deposit Dashboard<br>Sign in to access your store's data</p>
+    <button class="google-btn" onclick="signInWithGoogle()">
+      <svg width="20" height="20" viewBox="0 0 48 48">
+        <path fill="#EA4335" d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.72 17.74 9.5 24 9.5z"/>
+        <path fill="#4285F4" d="M46.98 24.55c0-1.57-.15-3.09-.38-4.55H24v9.02h12.94c-.58 2.96-2.26 5.48-4.78 7.18l7.73 6c4.51-4.18 7.09-10.36 7.09-17.65z"/>
+        <path fill="#FBBC05" d="M10.53 28.59c-.48-1.45-.76-2.99-.76-4.59s.27-3.14.76-4.59l-7.98-6.19C.92 16.46 0 20.12 0 24c0 3.88.92 7.54 2.56 10.78l7.97-6.19z"/>
+        <path fill="#34A853" d="M24 48c6.48 0 11.93-2.13 15.89-5.81l-7.73-6c-2.18 1.48-4.97 2.31-8.16 2.31-6.26 0-11.57-4.22-13.47-9.91l-7.98 6.19C6.51 42.62 14.62 48 24 48z"/>
+      </svg>
+      Continue with Google
+    </button>
+    <p class="login-note">Your data is private — only you can see your store's figures.<br>Each MedPlus store uses their own Google account.</p>
+  </div>
+</div>
+
+<!-- ═══════════════ MAIN APP ═══════════════ -->
+<div id="app">
+<div class="wrap">
+
+  <header>
+    <div class="hdr">
+      <div class="logo">
+        <div class="logo-ic">💊</div>
+        <div><h1>PharmAnalytics</h1><p>MedPlus Cash Report</p></div>
+      </div>
+      <div class="hdr-right">
+        <div class="tabs" id="tabs"></div>
+        <!-- User pill -->
+        <div class="user-pill" id="user-pill" onclick="toggleUserMenu()">
+          <div class="user-av" id="user-av">?</div>
+          <span class="user-name" id="user-name">Account</span>
+          <span style="font-size:10px;color:var(--mt)">▾</span>
+        </div>
+        <div class="user-menu" id="user-menu">
+          <div class="user-menu-email" id="user-email">—</div>
+          <button class="um-btn red" onclick="signOut()">🚪 Sign Out</button>
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <!-- Upload + Landing -->
+  <div id="up-section">
+    <label class="drop" id="drop">
+      <input type="file" id="fi" accept="image/*">
+      <div style="font-size:42px">📸</div>
+      <h2>Upload Cash Deposit Report</h2>
+      <p>Upload a photo of your MedPlus Cash Deposit screen</p>
+      <div class="cam-row" onclick="event.preventDefault()">
+        <label class="cam-btn">📷 Take Photo<input type="file" accept="image/*" capture="environment" onchange="handleFile(this)"></label>
+        <label class="cam-btn">🖼 Choose File<input type="file" accept="image/*" onchange="handleFile(this)"></label>
+      </div>
+      <p class="hint">100% private · your data only</p>
+    </label>
+
+    <div id="past-section">
+      <div class="section-hdr">
+        <h3>📅 Past Months</h3>
+        <div class="ln"></div>
+        <button class="ghost" onclick="openPicker()" style="font-size:12px;padding:6px 14px">🗓 Browse by Month</button>
+      </div>
+      <div id="saved-list"></div>
+    </div>
+
+    <div id="spin-wrap">
+      <div class="spin-ring">
+        <svg width="52" height="52" viewBox="0 0 52 52">
+          <circle cx="26" cy="26" r="20" fill="none" stroke="#1e2d42" stroke-width="4"/>
+          <circle cx="26" cy="26" r="20" fill="none" stroke="#00e5b4" stroke-width="4" stroke-dasharray="32 94" stroke-linecap="round"/>
+        </svg>
+      </div>
+      <h3>Reading your report…</h3>
+      <p id="spin-msg">Loading OCR engine…</p>
+      <div class="prog-bar"><div class="prog-fill" id="prog"></div></div>
+    </div>
+
+    <div class="err" id="err"></div>
+
+    <div id="manual-section">
+      <div class="manual-card">
+        <h3>Enter Data Manually</h3>
+        <p>OCR couldn't read clearly. Enter values by hand.</p>
+        <div class="month-row">
+          <input class="mi wide" id="m-month" placeholder="Month (e.g. February)">
+          <input class="mi" id="m-year" placeholder="Year" style="width:90px">
+        </div>
+        <div id="rows-container"></div>
+        <button class="add-row-btn" onclick="addRow()">+ Add Row</button><br>
+        <button class="submit-btn" onclick="submitManual()">Generate Dashboard →</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Dashboard -->
+  <div id="dash">
+    <div class="dash-hdr">
+      <div><small>Viewing Report</small><h2 id="rtitle"></h2></div>
+      <button class="ghost" onclick="showUp()">+ Add Month</button>
+    </div>
+    <div class="mom" id="mom">
+      <div class="mom-lbl">Month-over-Month</div>
+      <div class="mom-grid" id="mom-grid"></div>
+    </div>
+    <div class="kpi" id="kpi"></div>
+    <div class="card">
+      <div class="sh"><h3>Daily Sales Overview</h3><div class="ln"></div><div class="tg">Sales vs Cash</div></div>
+      <div class="leg">
+        <span><span class="ld" style="background:var(--acc3)"></span>Net Sales</span>
+        <span><span class="ld" style="background:var(--acc)"></span>Cash Deposited</span>
+      </div>
+      <div class="bwrap"><div class="bchart" id="bc"></div></div>
+    </div>
+    <div class="two">
+      <div class="card ic"><h4>📈 Insights</h4><div id="ins"></div></div>
+      <div class="card ic"><h4>💰 Profit</h4><div id="prf"></div></div>
+    </div>
+    <div class="card">
+      <div class="sh"><h3>Daily Breakdown</h3><div class="ln"></div><div class="tg" id="ttag"></div></div>
+      <div style="overflow-x:auto;-webkit-overflow-scrolling:touch">
+        <table>
+          <thead><tr>
+            <th>Date</th><th class="tr">Net Sales (₹)</th><th class="tr">Cash (₹)</th><th class="tr">Profit (₹)</th>
+          </tr></thead>
+          <tbody id="tb"></tbody>
+        </table>
+      </div>
+    </div>
+    <div id="save-bar">
+      <div class="save-bar-txt">
+        <h4>💾 Save this month</h4>
+        <p id="save-bar-sub">Saved to your account — accessible from any device</p>
+      </div>
+      <div class="save-actions">
+        <button class="del-month-btn" onclick="confirmDelete()">🗑 Delete</button>
+        <button class="save-btn" id="save-btn" onclick="saveCurrentMonth()">💾 Save Month</button>
+      </div>
+    </div>
+  </div>
+
+</div><!-- /wrap -->
+</div><!-- /app -->
+
+<!-- Month/Year Picker -->
+<div id="picker-overlay" onclick="if(event.target===this)closePicker()">
+  <div class="picker-box">
+    <h3>Browse Past Months</h3>
+    <p class="sub">Teal = saved data. Tap to view.</p>
+    <div class="picker-year-row">
+      <button class="yr-btn" onclick="changeYear(-1)">◀</button>
+      <span id="picker-year">2026</span>
+      <button class="yr-btn" onclick="changeYear(1)">▶</button>
+    </div>
+    <div class="month-grid" id="month-grid"></div>
+    <button class="picker-close" onclick="closePicker()">Close</button>
+  </div>
+</div>
+
+<!-- Confirm Delete -->
+<div id="confirm-overlay" onclick="if(event.target===this)closeConfirm()">
+  <div class="confirm-box">
+    <div class="ci">🗑</div>
+    <h3>Delete Month?</h3>
+    <p id="confirm-msg">This will permanently delete this month's data.</p>
+    <div class="confirm-row">
+      <button class="confirm-cancel" onclick="closeConfirm()">Cancel</button>
+      <button class="confirm-ok" id="confirm-ok">Delete</button>
+    </div>
+  </div>
+</div>
+
+<!-- DB Loading overlay -->
+<div id="db-loading">
+  <svg width="40" height="40" viewBox="0 0 52 52">
+    <circle cx="26" cy="26" r="20" fill="none" stroke="#1e2d42" stroke-width="4"/>
+    <circle cx="26" cy="26" r="20" fill="none" stroke="#00e5b4" stroke-width="4" stroke-dasharray="32 94" stroke-linecap="round"/>
+  </svg>
+  <p id="db-loading-msg">Loading…</p>
+</div>
+
+<!-- Toast -->
+<div id="toast"></div>
+
+<!-- Supabase + Tesseract -->
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js"></script>
+<script>
+// ════════════════════════════════════════════════════════
+// 🔧 CONFIG — replace these two values
+// ════════════════════════════════════════════════════════
+const SUPABASE_URL = 'https://phvlrhxvdxlexmvcnild.supabase.co';
+const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InBodmxyaHh2ZHhsZXhtdmNuaWxkIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzM0MTQ2NTEsImV4cCI6MjA4ODk5MDY1MX0.XeWSpoTiuLdUj46LqMF-qUNruaJYWiW3wQhlz36Nz4Y';
+// ════════════════════════════════════════════════════════
+
+const sb = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+// ── PWA ───────────────────────────────────────────────
+if ('serviceWorker' in navigator)
+  window.addEventListener('load', () => navigator.serviceWorker.register('/sw.js').catch(()=>{}));
+
+// ── State ─────────────────────────────────────────────
+let currentUser = null;
+const months = {};   // in-memory cache: key → data
+let cur = null;
+let pickerYear = new Date().getFullYear();
+let savedKeys = new Set(); // keys confirmed saved in DB
+
+// ── Auth ──────────────────────────────────────────────
+sb.auth.onAuthStateChange(async (event, session) => {
+  if (session?.user) {
+    currentUser = session.user;
+    updateUserUI();
+    showApp();
+    await loadAllFromDB();
+    renderSavedList();
+  } else {
+    currentUser = null;
+    showLogin();
+  }
+});
+
+async function signInWithGoogle() {
+  const { error } = await sb.auth.signInWithOAuth({
+    provider: 'google',
+    options: { redirectTo: window.location.origin }
+  });
+  if (error) toast('⚠ Sign-in failed: ' + error.message, 'bad');
+}
+
+async function signOut() {
+  closeUserMenu();
+  await sb.auth.signOut();
+  Object.keys(months).forEach(k => delete months[k]);
+  savedKeys.clear();
+  cur = null;
+}
+
+function showLogin() {
+  document.getElementById('login-screen').classList.add('on');
+  document.getElementById('app').classList.remove('on');
+}
+function showApp() {
+  document.getElementById('login-screen').classList.remove('on');
+  document.getElementById('app').classList.add('on');
+}
+
+function updateUserUI() {
+  if (!currentUser) return;
+  const name = currentUser.user_metadata?.full_name || currentUser.email?.split('@')[0] || 'You';
+  const avatar = currentUser.user_metadata?.avatar_url;
+  const email = currentUser.email || '';
+  document.getElementById('user-name').textContent = name.split(' ')[0];
+  document.getElementById('user-email').textContent = email;
+  const av = document.getElementById('user-av');
+  if (avatar) av.innerHTML = `<img src="${avatar}" alt="">`;
+  else av.textContent = name[0].toUpperCase();
+}
+
+function toggleUserMenu() {
+  document.getElementById('user-menu').classList.toggle('on');
+}
+function closeUserMenu() {
+  document.getElementById('user-menu').classList.remove('on');
+}
+document.addEventListener('click', e => {
+  if (!document.getElementById('user-pill').contains(e.target))
+    closeUserMenu();
+});
+
+// ── DB operations ─────────────────────────────────────
+function dbLoad(msg='Loading…') {
+  document.getElementById('db-loading-msg').textContent = msg;
+  document.getElementById('db-loading').classList.add('on');
+}
+function dbUnload() { document.getElementById('db-loading').classList.remove('on'); }
+
+async function loadAllFromDB() {
+  dbLoad('Loading your data…');
+  try {
+    const { data, error } = await sb
+      .from('pharmacy_months')
+      .select('month_key, month, year, days')
+      .order('year', { ascending: false });
+    if (error) throw error;
+    savedKeys.clear();
+    data.forEach(row => {
+      months[row.month_key] = { month: row.month, year: row.year, days: row.days };
+      savedKeys.add(row.month_key);
+    });
+  } catch(e) { toast('⚠ Could not load data: ' + e.message, 'bad'); }
+  dbUnload();
+}
+
+async function saveToDB(key) {
+  const d = months[key];
+  if (!d || !currentUser) return false;
+  dbLoad('Saving…');
+  try {
+    const { error } = await sb.from('pharmacy_months').upsert({
+      user_id: currentUser.id,
+      month_key: key,
+      month: d.month,
+      year: d.year,
+      days: d.days,
+      updated_at: new Date().toISOString()
+    }, { onConflict: 'user_id,month_key' });
+    if (error) throw error;
+    savedKeys.add(key);
+    dbUnload();
+    return true;
+  } catch(e) {
+    dbUnload();
+    toast('⚠ Save failed: ' + e.message, 'bad');
+    return false;
+  }
+}
+
+async function deleteFromDB(key) {
+  if (!currentUser) return;
+  dbLoad('Deleting…');
+  try {
+    const { error } = await sb.from('pharmacy_months')
+      .delete()
+      .eq('user_id', currentUser.id)
+      .eq('month_key', key);
+    if (error) throw error;
+    savedKeys.delete(key);
+    delete months[key];
+  } catch(e) { toast('⚠ Delete failed: ' + e.message, 'bad'); }
+  dbUnload();
+}
+
+// ── UI helpers ────────────────────────────────────────
+function showUp() {
+  document.getElementById('up-section').style.display = 'block';
+  document.getElementById('dash').classList.remove('on');
+  document.getElementById('spin-wrap').classList.remove('on');
+  document.getElementById('drop').style.display = '';
+  document.getElementById('err').classList.remove('on');
+  document.getElementById('manual-section').classList.remove('on');
+  renderSavedList();
+}
+function showErr(m) {
+  const el = document.getElementById('err');
+  el.innerHTML = m; el.classList.add('on');
+  document.getElementById('spin-wrap').classList.remove('on');
+  document.getElementById('drop').style.display = '';
+}
+function setMsg(m) { document.getElementById('spin-msg').textContent = m; }
+function setP(p)   { document.getElementById('prog').style.width = p + '%'; }
+
+// ── Saved list ────────────────────────────────────────
+const MORD = {January:1,February:2,March:3,April:4,May:5,June:6,July:7,August:8,September:9,October:10,November:11,December:12};
+function parseMonthKey(key) {
+  const p = key.split(' ');
+  return (parseInt(p[p.length-1])||2000)*100 + (MORD[p[0]]||0);
+}
+
+function renderSavedList() {
+  const container = document.getElementById('saved-list');
+  const keys = [...savedKeys].sort((a,b) => parseMonthKey(b) - parseMonthKey(a));
+  if (!keys.length) {
+    container.innerHTML = `<div class="no-saved">
+      No saved months yet.<br>
+      Upload a report → view dashboard → tap <strong style="color:var(--acc)">💾 Save Month</strong>.
+    </div>`;
+    return;
+  }
+  container.innerHTML = `<div class="saved-grid">` + keys.map(k => {
+    const m = calc(months[k]);
+    const pp = ((m.tP/m.tS)*100).toFixed(1);
+    return `<div class="saved-card" onclick="loadMonth('${k}')">
+      <button class="sdel" onclick="event.stopPropagation();confirmDeleteKey('${k}')">🗑</button>
+      <div class="sm">${k}</div>
+      <div class="ss">Sales: ₹${(m.tS/1000).toFixed(1)}K</div>
+      <div class="ss profit">Profit: ₹${(m.tP/1000).toFixed(1)}K (${pp}%)</div>
+    </div>`;
+  }).join('') + `</div>`;
+}
+
+function loadMonth(key) {
+  cur = key;
+  document.getElementById('up-section').style.display = 'none';
+  render(); renderTabs();
+}
+
+// ── Month picker ──────────────────────────────────────
+const MONTH_NAMES = ['January','February','March','April','May','June','July','August','September','October','November','December'];
+function openPicker() { pickerYear = new Date().getFullYear(); renderPickerGrid(); document.getElementById('picker-overlay').classList.add('on'); }
+function closePicker() { document.getElementById('picker-overlay').classList.remove('on'); }
+function changeYear(d) { pickerYear += d; renderPickerGrid(); }
+function renderPickerGrid() {
+  document.getElementById('picker-year').textContent = pickerYear;
+  document.getElementById('month-grid').innerHTML = MONTH_NAMES.map(mn => {
+    const key = `${mn} ${pickerYear}`;
+    const has = savedKeys.has(key);
+    return `<button class="mg-btn ${has?'has-data':'no-data'}"
+      onclick="${has?`pickMonth('${key}')`:'void(0)'}">${mn.slice(0,3)}</button>`;
+  }).join('');
+}
+function pickMonth(key) { closePicker(); loadMonth(key); }
+
+// ── Confirm / Delete ──────────────────────────────────
+let pendingDeleteKey = null;
+function confirmDelete() { confirmDeleteKey(cur); }
+function confirmDeleteKey(key) {
+  pendingDeleteKey = key;
+  document.getElementById('confirm-msg').textContent =
+    `"${key}" will be permanently deleted from your account.`;
+  document.getElementById('confirm-overlay').classList.add('on');
+}
+function closeConfirm() { document.getElementById('confirm-overlay').classList.remove('on'); pendingDeleteKey = null; }
+document.getElementById('confirm-ok').onclick = async () => {
+  const key = pendingDeleteKey; closeConfirm();
+  if (!key) return;
+  await deleteFromDB(key);
+  toast('🗑 ' + key + ' deleted', 'bad');
+  if (cur === key) { cur = null; showUp(); }
+  else { renderSavedList(); }
+  renderTabs();
+};
+
+// ── Save ──────────────────────────────────────────────
+async function saveCurrentMonth() {
+  if (!cur || !months[cur]) return;
+  const btn = document.getElementById('save-btn');
+  if (btn.classList.contains('saved')) return;
+  const ok = await saveToDB(cur);
+  if (ok) {
+    toast('✓ ' + cur + ' saved', 'good');
+    updateSaveBtn();
+    renderSavedList();
+  }
+}
+function updateSaveBtn() {
+  const btn = document.getElementById('save-btn');
+  const sub = document.getElementById('save-bar-sub');
+  if (cur && savedKeys.has(cur)) {
+    btn.textContent = '✓ Saved'; btn.classList.add('saved');
+    sub.textContent = 'Saved to your account — accessible from any device';
+  } else {
+    btn.textContent = '💾 Save Month'; btn.classList.remove('saved');
+    sub.textContent = 'Save to your account — view from any device';
+  }
+}
+
+// ── Toast ─────────────────────────────────────────────
+let toastTimer = null;
+function toast(msg, type='') {
+  const el = document.getElementById('toast');
+  el.textContent = msg; el.className = 'on' + (type?' '+type:'');
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => el.className = '', 3200);
+}
+
+// ── Upload ────────────────────────────────────────────
+const drop = document.getElementById('drop');
+drop.addEventListener('dragover', e => { e.preventDefault(); drop.classList.add('over'); });
+drop.addEventListener('dragleave', () => drop.classList.remove('over'));
+drop.addEventListener('drop', e => { e.preventDefault(); drop.classList.remove('over'); if(e.dataTransfer.files[0]) go(e.dataTransfer.files[0]); });
+document.getElementById('fi').addEventListener('change', e => { if(e.target.files[0]) go(e.target.files[0]); });
+function handleFile(inp) { if(inp.files[0]) go(inp.files[0]); }
+
+// ── OCR ───────────────────────────────────────────────
+async function go(file) {
+  drop.style.display = 'none';
+  document.getElementById('spin-wrap').classList.add('on');
+  document.getElementById('err').classList.remove('on');
+  document.getElementById('manual-section').classList.remove('on');
+  setMsg('Loading OCR engine…'); setP(5);
+  try {
+    const worker = await Tesseract.createWorker('eng', 1, {
+      logger: m => {
+        if (m.status === 'recognizing text') { setMsg('Reading image…'); setP(20 + Math.round(m.progress * 70)); }
+        else if (m.status.includes('loading')) { setMsg('Loading engine…'); setP(12); }
+      }
+    });
+    const { data: { text } } = await worker.recognize(file);
+    await worker.terminate();
+    setP(95); setMsg('Parsing data…');
+    const parsed = parseOCR(text);
+    if (!parsed || parsed.days.length < 3) {
+      document.getElementById('spin-wrap').classList.remove('on');
+      drop.style.display = '';
+      document.getElementById('manual-section').classList.add('on');
+      showErr('⚠ Only read ' + (parsed ? parsed.days.length : 0) + ' rows. Try a clearer photo, or enter manually:');
+      prefillManual(parsed); return;
+    }
+    setP(100);
+    const key = `${parsed.month} ${parsed.year}`;
+    months[key] = parsed; cur = key;
+    document.getElementById('spin-wrap').classList.remove('on');
+    document.getElementById('up-section').style.display = 'none';
+    render(); renderTabs();
+  } catch(e) { showErr('⚠ OCR error: ' + e.message); }
+}
+
+// ── Parse OCR ─────────────────────────────────────────
+const MON = {jan:'January',feb:'February',mar:'March',apr:'April',may:'May',jun:'June',jul:'July',aug:'August',sep:'September',oct:'October',nov:'November',dec:'December'};
+function parseOCR(text) {
+  const lines = text.split('\n').map(l => l.trim()).filter(Boolean);
+  let month = 'Unknown', year = new Date().getFullYear();
+  for (const l of lines) {
+    const m = l.match(/\b(jan|feb|mar|apr|may|jun|jul|aug|sep|oct|nov|dec)[a-z]*[\s\-]*(\d{4})\b/i);
+    if (m) { month = MON[m[1].toLowerCase()]||m[1]; year = parseInt(m[2]); break; }
+  }
+  if (month === 'Unknown') {
+    for (const l of lines) {
+      const m2 = l.match(/\d{1,2}[-\/](jan|feb|mar|apr|may|jun|jul|aug|sep|oct|nov|dec)[a-z]*[-\/](\d{2,4})/i);
+      if (m2) { month = MON[m2[1].toLowerCase()]||m2[1]; const y=parseInt(m2[2]); year=y<100?2000+y:y; break; }
+    }
+  }
+  const days = [];
+  for (const l of lines) {
+    const dm = l.match(/(\d{1,2}[-\/\s](jan|feb|mar|apr|may|jun|jul|aug|sep|oct|nov|dec)[a-z]*[-\/\s]\d{2,4})/i);
+    if (!dm) continue;
+    const nums = l.replace(dm[0],'').match(/[\d,]+\.\d{2}/g);
+    if (!nums || nums.length < 2) continue;
+    const ns = pn(nums[0]), cd = pn(nums[1]);
+    if (isNaN(ns)||isNaN(cd)||ns<10||cd<1) continue;
+    days.push({ date: dm[0].replace(/\s+/g,' ').trim(), netSales:ns, cashDeposited:cd });
+  }
+  if (days.length < 3) return fallback(lines, month, year);
+  return { month, year, days };
+}
+function fallback(lines, month, year) {
+  const days = []; let n = 1;
+  for (const l of lines) {
+    const nums = l.match(/[\d,]+\.\d{2}/g);
+    if (!nums||nums.length<2) continue;
+    const n1=pn(nums[0]),n2=pn(nums[1]);
+    if (isNaN(n1)||isNaN(n2)||n1<100||n2<10||n2>n1) continue;
+    days.push({ date:String(n).padStart(2,'0')+' '+month.slice(0,3)+' '+String(year).slice(-2), netSales:n1, cashDeposited:n2 });
+    n++;
+  }
+  return { month, year, days };
+}
+function pn(s) { return parseFloat(s.replace(/,/g,'')); }
+
+// ── Manual entry ──────────────────────────────────────
+let rc = 0;
+function addRow(d='',ns='',cd='') {
+  rc++;
+  const id='r'+rc, c=document.getElementById('rows-container'), div=document.createElement('div');
+  div.className='row-entry'; div.id=id;
+  div.innerHTML=`<input class="mi" placeholder="Date" value="${d}" style="width:110px;flex:0 0 auto">
+    <input class="mi" placeholder="Net Sales" value="${ns}" style="flex:1">
+    <input class="mi" placeholder="Cash" value="${cd}" style="flex:1">
+    <button onclick="document.getElementById('${id}').remove()">✕</button>`;
+  c.appendChild(div);
+}
+function prefillManual(p) {
+  document.getElementById('rows-container').innerHTML=''; rc=0;
+  if(p&&p.month!=='Unknown'){document.getElementById('m-month').value=p.month;document.getElementById('m-year').value=p.year;}
+  if(p&&p.days.length) p.days.forEach(d=>addRow(d.date,d.netSales,d.cashDeposited));
+  else for(let i=0;i<5;i++) addRow();
+}
+function submitManual() {
+  const month=document.getElementById('m-month').value.trim()||'Unknown';
+  const year=parseInt(document.getElementById('m-year').value)||new Date().getFullYear();
+  const days=[];
+  document.querySelectorAll('.row-entry').forEach(row=>{
+    const inp=row.querySelectorAll('input');
+    const d=inp[0].value.trim(),ns=parseFloat(inp[1].value.replace(/,/g,'')),cd=parseFloat(inp[2].value.replace(/,/g,''));
+    if(d&&!isNaN(ns)&&!isNaN(cd)) days.push({date:d,netSales:ns,cashDeposited:cd});
+  });
+  if(!days.length){alert('Add at least one row.');return;}
+  const key=`${month} ${year}`;
+  months[key]={month,year,days}; cur=key;
+  document.getElementById('manual-section').classList.remove('on');
+  document.getElementById('err').classList.remove('on');
+  document.getElementById('up-section').style.display='none';
+  render(); renderTabs();
+}
+
+// ── Tabs ──────────────────────────────────────────────
+function renderTabs() {
+  const el=document.getElementById('tabs'); el.innerHTML='';
+  Object.keys(months).forEach(k=>{
+    const b=document.createElement('button');
+    b.className='tab'+(k===cur?' on':''); b.textContent=k;
+    b.onclick=()=>{cur=k;render();renderTabs();}; el.appendChild(b);
+  });
+}
+
+// ── Metrics ───────────────────────────────────────────
+function calc(d) {
+  const days=d.days;
+  const tS=days.reduce((s,r)=>s+r.netSales,0);
+  const tC=days.reduce((s,r)=>s+r.cashDeposited,0);
+  const tP=tS-tC, aS=tS/days.length, aP=tP/days.length;
+  const best=days.reduce((a,b)=>b.netSales>a.netSales?b:a);
+  const worst=days.reduce((a,b)=>b.netSales<a.netSales?b:a);
+  return{tS,tC,tP,aS,aP,best,worst,days};
+}
+function f(n){return'₹'+Number(n).toLocaleString('en-IN',{minimumFractionDigits:2,maximumFractionDigits:2});}
+function fK(n){if(n>=100000)return'₹'+(n/100000).toFixed(2)+'L';if(n>=1000)return'₹'+(n/1000).toFixed(1)+'K';return f(n);}
+function pct(a,b){return((a-b)/b*100);}
+function sign(v){return(v>=0?'+':'')+v.toFixed(1)+'%';}
+
+// ── Render dashboard ──────────────────────────────────
+function render() {
+  const m=calc(months[cur]);
+  document.getElementById('dash').classList.add('on');
+  document.getElementById('rtitle').textContent=cur;
+
+  const keys=Object.keys(months), idx=keys.indexOf(cur);
+  let pm=null, pk=null;
+  if(idx>0){pk=keys[idx-1];pm=calc(months[pk]);}
+
+  const sG=pm?pct(m.tS,pm.tS):null;
+  const pG=pm?pct(m.tP,pm.tP):null;
+  const profitPct=(m.tP/m.tS)*100;
+
+  document.getElementById('kpi').innerHTML=`
+    <div class="kc g" style="animation-delay:0s"><div class="kl">Total Net Sales</div><div class="kv">${fK(m.tS)}</div><div class="ks">Over ${m.days.length} days</div></div>
+    <div class="kc p" style="animation-delay:.05s"><div class="kl">Cash Deposited</div><div class="kv">${fK(m.tC)}</div><div class="ks">Cash collected</div></div>
+    <div class="kc o" style="animation-delay:.1s"><div class="kl">Total Profit</div><div class="kv">${fK(m.tP)}</div><div class="ks">Net Sales − Cash</div></div>
+    <div class="kc g" style="animation-delay:.15s"><div class="kl">Profit %</div>
+      <div class="kv" style="color:${profitPct>=20?'var(--acc)':profitPct>=10?'var(--acc2)':'var(--dng)'}">${profitPct.toFixed(1)}%</div>
+      <div class="ks">Profit as % of Sales</div></div>
+    <div class="kc ${sG!==null?(sG>=0?'g':'r'):'p'}" style="animation-delay:.2s"><div class="kl">Sales vs Last Month</div>
+      <div class="kv" style="color:${sG===null?'var(--mt)':sG>=0?'var(--acc)':'var(--dng)'}">
+        ${sG!==null?(sG>=0?'+':'')+sG.toFixed(1)+'%':'—'}</div>
+      <div class="ks">${sG!==null?(sG>=0?'▲ Up from '+pk:'▼ Down from '+pk):'Upload last month to compare'}</div></div>
+    <div class="kc ${pG!==null?(pG>=0?'g':'r'):'p'}" style="animation-delay:.25s"><div class="kl">Profit vs Last Month</div>
+      <div class="kv" style="color:${pG===null?'var(--mt)':pG>=0?'var(--acc)':'var(--dng)'}">
+        ${pG!==null?(pG>=0?'+':'')+pG.toFixed(1)+'%':'—'}</div>
+      <div class="ks">${pG!==null?(pG>=0?'▲ Up from '+pk:'▼ Down from '+pk):'Upload last month to compare'}</div></div>`;
+
+  if(pm){
+    const sC=pct(m.tS,pm.tS),pC=pct(m.tP,pm.tP),aC=pct(m.aS,pm.aS);
+    document.getElementById('mom-grid').innerHTML=`
+      <div class="mom-item"><div class="ml">Sales</div><div class="mv ${sC>=0?'up':'dn'}">${sign(sC)}</div><div class="ms">${fK(pm.tS)}→${fK(m.tS)}</div></div>
+      <div class="mom-item"><div class="ml">Profit</div><div class="mv ${pC>=0?'up':'dn'}">${sign(pC)}</div><div class="ms">${fK(pm.tP)}→${fK(m.tP)}</div></div>
+      <div class="mom-item"><div class="ml">Daily Avg</div><div class="mv ${aC>=0?'up':'dn'}">${sign(aC)}</div><div class="ms">${fK(pm.aS)}→${fK(m.aS)}</div></div>`;
+    document.getElementById('mom').classList.add('on');
+  } else { document.getElementById('mom').classList.remove('on'); }
+
+  const mx=Math.max(...m.days.map(d=>d.netSales));
+  document.getElementById('bc').innerHTML=m.days.map((d,i)=>{
+    const sh=Math.max(3,(d.netSales/mx)*124),ch=Math.max(3,(d.cashDeposited/mx)*124);
+    return`<div class="bg"><div class="btt">${d.date}<br>Sales:${f(d.netSales)}<br>Cash:${f(d.cashDeposited)}<br>Profit:${f(d.netSales-d.cashDeposited)}</div>
+      <div class="br s" style="height:${sh}px"></div><div class="br c" style="height:${ch}px"></div>
+      <div class="blbl">${i%5===0?(i+1):''}</div></div>`;
+  }).join('');
+
+  const bpd=m.days.reduce((a,b)=>(b.netSales-b.cashDeposited)>(a.netSales-a.cashDeposited)?b:a);
+  document.getElementById('ins').innerHTML=`
+    <div class="ir"><span class="il">Best Sales Day</span><span class="iv pos">${m.best.date} — ${f(m.best.netSales)}</span></div>
+    <div class="ir"><span class="il">Lowest Sales Day</span><span class="iv neg">${m.worst.date} — ${f(m.worst.netSales)}</span></div>
+    <div class="ir"><span class="il">Days Above Avg</span><span class="iv">${m.days.filter(d=>d.netSales>m.aS).length}/${m.days.length}</span></div>
+    <div class="ir"><span class="il">Best Profit Day</span><span class="iv pos">${bpd.date} — ${f(bpd.netSales-bpd.cashDeposited)}</span></div>
+    <div class="ir"><span class="il">Daily Avg Sales</span><span class="iv">${f(m.aS)}</span></div>
+    <div class="ir"><span class="il">Daily Avg Profit</span><span class="iv pos">${f(m.aP)}</span></div>`;
+
+  document.getElementById('prf').innerHTML=`
+    <div class="ir"><span class="il">Total Net Sales</span><span class="iv">${f(m.tS)}</span></div>
+    <div class="ir"><span class="il">Cash Deposited</span><span class="iv" style="color:var(--acc3)">${f(m.tC)}</span></div>
+    <div class="ir"><span class="il">Total Profit</span><span class="iv pos">${f(m.tP)}</span></div>
+    <div class="ir"><span class="il">Daily Avg Profit</span><span class="iv pos">${f(m.aP)}</span></div>
+    <div class="ir"><span class="il">Highest Day Profit</span><span class="iv pos">${f(Math.max(...m.days.map(d=>d.netSales-d.cashDeposited)))}</span></div>
+    <div class="ir"><span class="il">Lowest Day Profit</span><span class="iv">${f(Math.min(...m.days.map(d=>d.netSales-d.cashDeposited)))}</span></div>`;
+
+  document.getElementById('ttag').textContent=`${m.days.length} entries`;
+  document.getElementById('tb').innerHTML=m.days.map(d=>{
+    const pr=d.netSales-d.cashDeposited,ib=d.date===m.best.date;
+    return`<tr class="${ib?'best':''}"><td>${d.date}${ib?' ⭐':''}</td>
+      <td class="tr">${f(d.netSales)}</td>
+      <td class="tr" style="color:var(--acc3)">${f(d.cashDeposited)}</td>
+      <td class="tr pos">${f(pr)}</td></tr>`;
+  }).join('')+`<tr style="border-top:2px solid var(--bdr)">
+    <td style="color:var(--acc);font-weight:700">TOTAL</td>
+    <td class="tr" style="font-weight:700">${f(m.tS)}</td>
+    <td class="tr" style="color:var(--acc3);font-weight:700">${f(m.tC)}</td>
+    <td class="tr pos" style="font-weight:700">${f(m.tP)}</td></tr>`;
+
+  updateSaveBtn();
+}
+</script>
+</body>
+</html>
