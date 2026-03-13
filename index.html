@@ -532,8 +532,11 @@ async function loadAllFromDB() {
       months[row.month_key] = { month: row.month, year: row.year, days: row.days };
       savedKeys.add(row.month_key);
     });
-  } catch(e) { toast('⚠ Could not load data: ' + e.message, 'bad'); }
-  dbUnload();
+  } catch(e) {
+    toast('⚠ Could not load data: ' + e.message, 'bad');
+  } finally {
+    dbUnload();
+  }
 }
 
 async function saveToDB(key) {
