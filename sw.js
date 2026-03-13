@@ -12,17 +12,19 @@ self.addEventListener('activate', e => {
 });
 
 self.addEventListener('fetch', e => {
-  // Never cache Supabase API calls
   if (e.request.url.includes('supabase.co')) return;
+  if (e.request.method !== 'GET') return;
+
   e.respondWith(
     caches.match(e.request).then(cached => {
-      if (cached) return cached;
-      return fetch(e.request).then(resp => {
+      const fetchPromise = fetch(e.request).then(resp => {
         if (resp && resp.status === 200 && resp.type !== 'opaque') {
-          caches.open(CACHE).then(c => c.put(e.request, resp.clone()));
+          const clone = resp.clone();
+          caches.open(CACHE).then(c => c.put(e.request, clone));
         }
         return resp;
       }).catch(() => cached);
+      return cached || fetchPromise;
     })
   );
 });
