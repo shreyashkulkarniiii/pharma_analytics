@@ -1,6 +1,8 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
+<link rel="icon" href="/icon-192.png">
+
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
 <meta name="theme-color" content="#00e5b4">
@@ -445,25 +447,35 @@ if ('serviceWorker' in navigator)
 
 // ── State ─────────────────────────────────────────────
 let currentUser = null;
-const months = {};   // in-memory cache: key → data
+const months = {};
 let cur = null;
 let pickerYear = new Date().getFullYear();
-let savedKeys = new Set(); // keys confirmed saved in DB
+let savedKeys = new Set();
+let appInitialized = false;
 
 // ── Auth ──────────────────────────────────────────────
 sb.auth.onAuthStateChange(async (event, session) => {
-  if (session?.user) {
+  if (event === 'SIGNED_OUT') {
+    currentUser = null;
+    appInitialized = false;
+    Object.keys(months).forEach(k => delete months[k]);
+    savedKeys.clear();
+    cur = null;
+    showLogin();
+    return;
+  }
+
+  if ((event === 'SIGNED_IN' || event === 'INITIAL_SESSION') && session?.user) {
     currentUser = session.user;
     updateUserUI();
     showApp();
-    await loadAllFromDB();
-    renderSavedList();
-  } else {
-    currentUser = null;
-    showLogin();
+    if (!appInitialized) {
+      appInitialized = true;
+      await loadAllFromDB();
+      renderSavedList();
+    }
   }
 });
-
 async function signInWithGoogle() {
   const { error } = await sb.auth.signInWithOAuth({
     provider: 'google',
@@ -518,7 +530,6 @@ function dbLoad(msg='Loading…') {
   document.getElementById('db-loading').classList.add('on');
 }
 function dbUnload() { document.getElementById('db-loading').classList.remove('on'); }
-
 async function loadAllFromDB() {
   dbLoad('Loading your data…');
   try {
