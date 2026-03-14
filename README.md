@@ -1,7 +1,4 @@
 # 💊 PharmAnalytics
 
-A multi-tenant SaaS dashboard for MedPlus pharmacy stores to track monthly 
-Cash Deposit Reports. Upload a photo → OCR extracts the data → instant analytics.
-
-Built with Tesseract.js, Supabase (Auth + RLS), and deployed on Vercel.
-Each store logs in with Google and sees only their own data.
+A PWA dashboard for MedPlus pharmacy stores to scan and analyze monthly Cash Deposit Reports.
+Upload a photo → OCR extracts the data → instant analytics. Works offline, saves to device.
