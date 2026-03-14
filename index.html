@@ -490,6 +490,8 @@ async function signOut() {
   Object.keys(months).forEach(k => delete months[k]);
   savedKeys.clear();
   cur = null;
+  appInitialized = false;
+  showLogin();
 }
 
 function showLogin() {
